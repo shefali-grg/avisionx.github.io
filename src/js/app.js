@@ -1,9 +1,9 @@
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(function() {
-      console.log('SW registered');
-    });
-}
+// if ('serviceWorker' in navigator) {
+//   navigator.serviceWorker.register('/sw.js')
+//     .then(function() {
+//       console.log('SW registered');
+//     });
+// }
 
 var papi = "";
 
@@ -17,6 +17,12 @@ function refetch(){
       var props=childSnapshot.val();
       var location=props["Location"];
       var time=props["Time"];
+      if(time == ""){
+        time = "Today";
+      };
+      if(location == ""){
+        location = "DoIt!";
+      };
       var layer1 = document.createElement("div");
       layer1.setAttribute("class", "row task");
       var layer2 = document.createElement("div");
@@ -24,7 +30,7 @@ function refetch(){
       var tasker = document.createElement("h3");
       tasker.innerHTML = taskname;
       tasker.onclick = function(){
-        show(taskname + '_tt');
+        show(taskname.replace(/\s/g, "_") + '_tt');
       };
       var layer3 = document.createElement("div");
       layer3.setAttribute("class", "col-3 remove");
@@ -41,7 +47,7 @@ function refetch(){
 
       var desc = document.createElement("div");
       desc.setAttribute("class", "desc");
-      desc.setAttribute("id", taskname+'_tt');
+      desc.setAttribute("id", taskname.replace(/\s/g, "_")+'_tt');
       var rower = document.createElement("div");
       rower.setAttribute("class", "row");
       var tasker = document.createElement("div");
@@ -53,7 +59,7 @@ function refetch(){
       var backer = document.createElement("div");
       backer.setAttribute("class", "col-2 back");
       backer.onclick = function(){
-        show(taskname + '_tt');
+        show(taskname.replace(/\s/g, "_") + '_tt');
       };
       backer.innerHTML = '<span>X</span>';
       rower.appendChild(backer);
@@ -62,7 +68,7 @@ function refetch(){
       var det1 = document.createElement("div");
       det1.setAttribute("class", "col-12 center");
       var head = document.createElement("h4");
-      head.innerHTML = location + ", " + time + '<br>';
+      head.innerHTML = location + " , " + time + '<br>';
       det1.appendChild(head);
       new_row.appendChild(det1);
       var fuller = document.createElement("div");
@@ -142,6 +148,15 @@ function show(str){
 
 function deleteData(task,data) {
   firebase.database().ref(task+"/data/"+data).remove();
+  var count = 0;
+  firebase.database().ref(task).once('value',function(snap){
+    snap.forEach(function(chil){
+      count++;
+    })
+  });
+  if(count == 2){
+    deleteTask(task);
+  }
 }
 
 // $("#topix").on('scroll', function () {
