@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>DoIt!</title>
+  <link rel="icon" href="/src/images/icons/icon.ico">
+  <link href="https://fonts.googleapis.com/css?family=Dosis:400,700" rel="stylesheet">
+  <link rel="stylesheet" href="/src/css/bootstrap.css">
+  <link rel="stylesheet" href="/src/css/app.css">
+  <link rel="manifest" href="/manifest.json">
+</head>
+<body>
+
+  <!-- Main page -->
+  <div class="container main-page">
+    <div class="row">
+      <div class="button" onclick="refetch()">REFRESH</div>
+      <div class="col header"><h2>TASKS</h2></div>
+    </div>
+    <div class="row">
+      <div class="data" id="data">
+        <!-- <div class="row task">
+          <div class="col-9 head">
+            <h3 onclick="show('Groceries1_tt')">Groceries1</h3>
+          </div>
+          <div class="col-3 remove"><p onclick="deleteTask('Groceries1')">Delete</p></div>
+        </div>
+        <div class="desc" id="Groceries1_tt">
+          <div class="row">
+            <div class="col-10 taskname">
+              <h3>Groceries1</h3>
+            </div>
+            <div class="col-2 back" onclick="show('Groceries1_tt')">
+              <span>X</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-12 center">
+              <h4>Market, 7 p.m.<br></h4>
+            </div>
+          </div>
+          <div class="row fuller">
+            <div class="col-12 center" id="cont">
+              <h5>Cheese</h5>
+            </div>
+          </div>
+          <div class="row center bot">
+            <div class="col-5"></div>
+            <div class="col-2 micer" onclick="micdata()">MIC</div>
+            <div class="col-5"></div>
+          </div>
+        </div> -->
+      </div>
+    </div>
+    <div class="row">
+      <div class="text-input">
+        <input type="text" id="input" placeholder="Enter New Tasks Here!">
+        <div class="inpbut" onclick="send()">SEND</div>
+        <div class="inpbut" onclick="create_list()">MIC</div>
+      </div>
+    </div>
+  </div>
+  <script src="https://www.gstatic.com/firebasejs/4.12.0/firebase.js"></script>
+
+  <!-- Firebase Init -->
+  <script>
+    var config = {
+      apiKey: "AIzaSyBDVRl_zFR6k-TDPAl-sVr98ujpDWg9VPY",
+      authDomain: "doit-data.firebaseapp.com",
+      databaseURL: "https://doit-data.firebaseio.com",
+      projectId: "doit-data",
+      storageBucket: "doit-data.appspot.com",
+      messagingSenderId: "72181773615"
+    };
+    firebase.initializeApp(config);
+    firebase.database().ref().on("value",function(snap){ refetch();});// function to (re)display data
+  </script>
+
+  <!-- SPEECH conversion to Firebase -->
+  <script >
+    var langs =[['English',['en-AU', 'Australia'],['en-CA', 'Canada'],['en-IN', 'India'],['en-NZ', 'New Zealand'],['en-ZA', 'South Africa'],
+    ['en-GB', 'United Kingdom'], ['en-US', 'United States']]];
+    var final_transcript = '';
+    var recognition = new webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    var button_val; //button to decide kind of speech input
+
+    function create_list() {
+      final_transcript = '';
+      recognition.lang = langs[0][2];
+      recognition.start();
+      button_val=1;
+    }
+
+    recognition.onstart = function() {
+      // console.log("Speech Recognition Started");
+    };
+
+    recognition.onspeechend = function() {
+      // console.log("Speech Recognition Stopped");
+      recognition.stop();
+    }
+
+    recognition.onend = function() {
+      // console.log("Analysis of Speech Ended");
+      if((button_val==2)&&(final_transcript!=""))
+        append_task(final_transcript);
+      if (!final_transcript) {
+        return;
+      }
+    };
+
+    recognition.onresult = function(event) {
+      var interim_transcript = '';
+      for (var i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal)
+          final_transcript += event.results[i][0].transcript;
+        else
+          interim_transcript += event.results[i][0].transcript;
+      }
+      if(button_val==1){
+        document.getElementById('input').value = final_transcript;
+        new_tasklist(final_transcript);
+      }
+    }
+
+    function new_tasklist(s){
+      var from_index=s.indexOf("from");
+      var at_index=s.lastIndexOf("at");
+      var task,loca,thyme,prime;
+      var tom_index=s.lastIndexOf("tomorrow");
+      if((from_index==-1) &&(at_index!=-1))
+      {
+        loca="";
+        task=s.slice(0,at_index);
+        thyme=s.slice(at_index+3);
+        // console.log("ohmaglob1");
+      }
+      if((at_index==-1)&&(from_index!=-1))
+      {
+        thyme="";
+        task=s.slice(0,from_index);
+        loca=s.slice(from_index+5);
+        // console.log("ohmaglob2");
+      }
+      if((at_index==-1)&&(from_index==-1))
+      {
+        thyme="";
+        task=s;
+        loca="";
+        // console.log("ohmaglob3");
+      }
+      if((at_index!=-1)&&(from_index!=-1))
+      {
+        loca=s.slice(from_index+5,at_index);
+        task=s.slice(0,from_index);
+        thyme=s.slice(at_index+3);
+        // console.log("ohmaglob4");
+      }
+      var tsk={};
+      tsk[task]="";
+      prime=task;
+      if(tom_index!=-1){
+        firebase.database().ref("Tomorrow/"+prime).set({
+          "Location": loca,
+          "Time": thyme,
+          // "Scheduler":"0000000",
+          "data": tsk
+        });
+      }
+      else{
+        firebase.database().ref(prime).set({
+          "Location": loca,
+          "Time": thyme,
+          // "Scheduler":"0000000",
+          "data": tsk
+        });
+      }
+    }
+  </script>
+  <script src="/src/js/jquery.js"></script>
+  <script src="/src/js/popper.js"></script>
+  <script src="/src/js/bootstrap.js"></script>
+  <script src="/src/js/app.js"></script>
+</body>
+</html>
