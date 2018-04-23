@@ -132,7 +132,11 @@
       var from_index=s.indexOf("from");
       var at_index=s.lastIndexOf("at");
       var task,loca,thyme,prime;
-      var tom_index=s.lastIndexOf("tomorrow");
+      if(s.charAt(at_index-1)!=" ")    //////changes
+        at_index=-1;
+      if(s.charAt(from_index-1)!=" ")
+        from_index=-1;
+     
       if((from_index==-1) &&(at_index!=-1))
       {
         loca="";
@@ -163,23 +167,14 @@
       }
       var tsk={};
       tsk[task]="";
-      prime=task;
-      if(tom_index!=-1){
-        firebase.database().ref("Tomorrow/"+prime).set({
-          "Location": loca,
-          "Time": thyme,
-          // "Scheduler":"0000000",
-          "data": tsk
-        });
-      }
-      else{
+      prime=task;  //deleted tomorrow conditions
         firebase.database().ref(prime).set({
           "Location": loca,
           "Time": thyme,
           // "Scheduler":"0000000",
           "data": tsk
         });
-      }
+      
     }
   </script>
   <script src="/src/js/jquery.js"></script>
