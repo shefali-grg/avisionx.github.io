@@ -76,11 +76,6 @@ function refetch(){
       var centerer = document.createElement("div");
       centerer.setAttribute("class", "col-12 center");
       centerer.setAttribute("id", "cont");
-      
-      !("data" in props)
-      {
-        deleteTask(props);
-      }
       var data=props["data"];
       for (var key in data){
         var keyer = document.createElement("h5");
