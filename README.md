@@ -1,2 +1,0 @@
-# avisionx.github.io
-DoIt! 
